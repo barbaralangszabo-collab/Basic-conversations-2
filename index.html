@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A2 English Master - 20 Active Scenarios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #F4A329;
+            --secondary: #2BB6B4;
+            --bg: #FFF7F2;
+        }
+        body { font-family: 'Nunito', sans-serif; background-color: var(--bg); color: #1F2937; }
+        .school-card { background: white; border-radius: 16px; border: 1px solid #E6E9EF; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        .btn-topic { transition: all 0.2s; border: 2px solid #F9C97A; background: white; padding: 0.75rem; border-radius: 12px; font-weight: 700; font-size: 0.85rem; height: 100%; }
+        .btn-topic.active { background: var(--primary); color: white; border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(244,163,41,0.3); }
+        
+        /* Flashcard Styles */
+        .flashcard { perspective: 1000px; height: 180px; cursor: pointer; }
+        .flashcard-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+        .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+        .flashcard-front, .flashcard-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; padding: 1.5rem; border-radius: 12px; font-size: 1.25rem; text-align: center; font-weight: 700; border: 3px solid transparent; }
+        .flashcard-front { background: white; border-color: var(--secondary); color: var(--secondary); }
+        .flashcard-back { background: var(--secondary); color: white; transform: rotateY(180deg); }
+        
+        .phrase-btn { background: white; border: 1px solid #E6E9EF; padding: 0.6rem 1rem; border-radius: 10px; text-align: left; width: 100%; transition: 0.2s; font-size: 0.9rem; }
+        .phrase-btn.disabled { opacity: 0.2; cursor: not-allowed; }
+        
+        .mode-toggle { background: #eee; border-radius: 999px; padding: 4px; display: flex; gap: 4px; }
+        .mode-btn { padding: 4px 12px; border-radius: 999px; font-size: 10px; font-weight: 900; transition: 0.2s; }
+        .mode-btn.active { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); color: var(--secondary); }
+    </style>
+</head>
+<body class="p-4 md:p-6">
+
+<div class="max-w-6xl mx-auto">
+    <header class="text-center mb-8">
+        <h1 class="text-4xl font-black mb-1" style="color: var(--primary);">Elementary English Hub</h1>
+        <p class="text-gray-400 font-bold uppercase tracking-widest text-xs">20 Classroom Scenarios</p>
+    </header>
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3 mb-8" id="topicGrid"></div>
+
+    <div id="workspace" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-3 space-y-4">
+            <div class="school-card p-5">
+                <h3 class="font-bold text-teal-600 mb-2 text-xs uppercase tracking-tighter">🎯 Grammar Focus</h3>
+                <div id="grammarDisplay" class="text-sm font-bold text-gray-700"></div>
+            </div>
+            <div class="school-card p-5">
+                <h3 class="font-bold text-orange-500 mb-3 text-sm uppercase">🔑 Key Word Bank</h3>
+                <div id="vocabDisplay" class="flex flex-wrap gap-2"></div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-4 space-y-4">
+            <div class="school-card p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="mode-toggle">
+                        <button id="modePhrases" onclick="setMode('phrases')" class="mode-btn active">PHRASES</button>
+                        <button id="modeVocab" onclick="setMode('vocab')" class="mode-btn">VOCABULARY</button>
+                    </div>
+                    <span id="cardCounter" class="text-[10px] font-black bg-gray-100 px-2 py-1 rounded-full text-gray-400"></span>
+                </div>
+                <div id="cardContainer" class="flashcard"></div>
+                <div class="flex justify-between mt-4">
+                    <button onclick="changeCard(-1)" class="text-[10px] font-black text-secondary hover:opacity-70 tracking-widest">PREVIOUS</button>
+                    <button onclick="changeCard(1)" class="text-[10px] font-black text-secondary hover:opacity-70 tracking-widest">NEXT</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-5 space-y-4">
+            <div class="school-card p-6">
+                <h2 class="font-bold text-lg mb-1">Sentence Sorter</h2>
+                <div id="shuffledContainer" class="space-y-2 mb-6 mt-4"></div>
+                <div id="dropZone" class="min-h-[150px] bg-orange-50/30 rounded-xl p-3 space-y-2 border-2 border-dashed border-orange-100"></div>
+                
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <button onclick="verifyOrder()" class="bg-[#2BB6B4] text-white py-3 rounded-xl font-black text-xs shadow-md">CHECK ORDER</button>
+                    <button onclick="resetOrder()" class="bg-gray-200 text-gray-600 py-3 rounded-xl font-black text-xs">RESET</button>
+                </div>
+                <button onclick="showSolution()" class="w-full mt-3 text-[10px] font-black text-gray-300 hover:text-secondary tracking-widest uppercase">Reveal Answer Key</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const topicsData = {
+    "Coffee Shop": { 
+        grammar: "Requests (Can I...?)", 
+        vocab: [["Latte", "Tejeskávé"], ["Sugar", "Cukor"], ["To stay", "Helyben"], ["Receipt", "Blokk"], ["Change", "Visszajáró"], ["Muffin", "Muffin"]],
+        phrases: [["Can I have a latte?", "Kérhetek egy tejeskávét?"], ["Anything else?", "Még valami mást?"]], 
+        sample: ["A: Hello! Can I have a large latte, please?", "B: Sure. To stay or to go?", "A: To stay, please. And a muffin.", "B: That is 6 euros, please.", "A: Here you are.", "B: Thank you. Enjoy!"] 
+    },
+    "Birthday Party": {
+        grammar: "Future & Invitations",
+        vocab: [["Birthday", "Születésnap"], ["Present", "Ajándék"], ["Cake", "Torta"], ["Invite", "Meghív"], ["Balloon", "Lufi"], ["Guest", "Vendég"]],
+        phrases: [["Are you coming?", "Jössz?"], ["What time does it start?", "Hánykor kezdődik?"]],
+        sample: ["A: Hi! Are you coming to my party on Saturday?", "B: I'd love to! What time does it start?", "A: It starts at 7 PM at my house.", "B: Should I bring anything?", "A: Just some snacks or drinks.", "B: Okay! See you there."]
+    },
+    "Tech Store": {
+        grammar: "Comparatives",
+        vocab: [["Laptop", "Laptop"], ["Fast", "Gyors"], ["Lightweight", "Könnyű"], ["Expensive", "Drága"], ["Screen", "Képernyő"], ["Battery", "Akku"]],
+        phrases: [["Which one is better?", "Melyik a jobb?"], ["It's more expensive.", "Ez drágább."]],
+        sample: ["A: I'm looking for a new laptop.", "B: This one is very fast and lightweight.", "A: Is it better than the black one?", "B: Yes, but it is also more expensive.", "A: How much is the difference?", "B: About 200 euros."]
+    },
+    "Weekend Picnic": {
+        grammar: "There is / There are",
+        vocab: [["Picnic", "Piknik"], ["Blanket", "Pléd"], ["Sandwich", "Szendvics"], ["Juice", "Gyümölcslé"], ["Basket", "Kosár"], ["Sunny", "Napos"]],
+        phrases: [["Let's have a picnic!", "Piknikezzünk!"], ["Is there any juice?", "Van gyümölcslé?"]],
+        sample: ["A: The weather is beautiful. Let's have a picnic!", "B: Great idea. Is there any food in the fridge?", "A: Yes, there are some sandwiches and fruit.", "B: Are there any cold drinks?", "A: No, we should buy some juice at the shop.", "B: Okay, I'll bring the blanket."]
+    },
+    "The Cinema": {
+        grammar: "Present Simple & Time",
+        vocab: [["Tickets", "Jegyek"], ["Screen", "Vászon"], ["Popcorn", "Popkorn"], ["Row", "Sor"], ["Adult", "Felnőtt"], ["Seat", "Ülés"]],
+        phrases: [["Two tickets, please.", "Két jegyet kérek."], ["Where are we sitting?", "Hol ülünk?"]],
+        sample: ["A: Hello, two tickets for Batman, please.", "B: Which screening? 6:00 or 9:00?", "A: The 6:00 screening, please.", "B: That's 20 dollars.", "A: Where are we sitting?", "B: You are in Row G, seats 10 and 11."]
+    },
+    "Clothes Shop": {
+        grammar: "Sizes & Adjectives",
+        vocab: [["Medium", "Közepes"], ["Large", "Nagy"], ["Fitting room", "Próbafülke"], ["Mirror", "Tükör"], ["Cheap", "Olcsó"], ["Expensive", "Drága"]],
+        phrases: [["Can I try this on?", "Felpróbálhatom ezt?"], ["It's too small.", "Ez túl kicsi."]],
+        sample: ["A: Excuse me, do you have this in medium?", "B: Let me check... yes, here you are.", "A: Can I try it on?", "B: Yes, the fitting rooms are over there.", "A: It's perfect. How much is it?", "B: It's 25 pounds."]
+    },
+    "The Airport": {
+        grammar: "Present Continuous",
+        vocab: [["Gate", "Kapu"], ["Passport", "Útlevél"], ["Luggage", "Poggyász"], ["Delayed", "Késik"], ["Flight", "Járat"], ["Boarding", "Beszállás"]],
+        phrases: [["Is the flight on time?", "Pontos a gép?"], ["Have a nice flight!", "Jó utat!"]],
+        sample: ["A: Can I see your passport, please?", "B: Yes, here you are.", "A: Are you checking any bags?", "B: Yes, just this suitcase.", "A: Your flight is at Gate B22.", "B: Thank you very much."]
+    },
+    "Last Holiday": {
+        grammar: "Past Simple",
+        vocab: [["Beach", "Strand"], ["Museum", "Múzeum"], ["Weather", "Időjárás"], ["Delicious", "Finom"], ["Trip", "Utazás"], ["Sunny", "Napos"]],
+        phrases: [["Where did you go?", "Hová mentél?"], ["It was great!", "Nagyszerű volt!"]],
+        sample: ["A: Where did you go on holiday?", "B: I went to Italy last month.", "A: Did you stay in a hotel?", "B: No, I stayed in an apartment.", "A: How was the weather?", "B: It was very hot and sunny!"]
+    },
+    "Asking Directions": {
+        grammar: "Imperatives",
+        vocab: [["Straight", "Egyenesen"], ["Left", "Balra"], ["Right", "Jobbra"], ["Corner", "Sarok"], ["Opposite", "Szemben"], ["Near", "Közel"]],
+        phrases: [["How do I get to...?", "Hogyan jutok el...?"], ["You can't miss it.", "Nem tudod elvéteni."]],
+        sample: ["A: Excuse me, where is the station?", "B: Go straight on this road.", "A: Is it far from here?", "B: No, turn left at the traffic lights.", "A: Okay, and then?", "B: It is opposite the park. You can't miss it."]
+    },
+    "Daily Routine": {
+        grammar: "Adverbs of Frequency",
+        vocab: [["Usually", "Általában"], ["Always", "Mindig"], ["Never", "Soha"], ["Sometimes", "Néha"], ["Gym", "Edzőterem"], ["Wake up", "Felkel"]],
+        phrases: [["What time do you start?", "Hánykor kezdesz?"], ["I usually walk.", "Általában sétálok."]],
+        sample: ["A: What time do you usually wake up?", "B: I always get up at 7 o'clock.", "A: Do you have breakfast at home?", "B: No, I usually just have a coffee at work.", "A: What do you do in the evening?", "B: I sometimes go to the gym, then I watch TV."]
+    },
+    "At the Chemist": {
+        grammar: "Advice (Should)",
+        vocab: [["Cold", "Megfázás"], ["Cough", "Köhögés"], ["Medicine", "Gyógyszer"], ["Cream", "Krém"], ["Rest", "Pihenés"], ["Pharmacy", "Gyógyszertár"]],
+        phrases: [["I feel terrible.", "Szörnyen vagyok."], ["You should rest.", "Pihenned kellene."]],
+        sample: ["A: Hello, I have a very bad sunburn.", "B: You should use this cooling cream.", "A: How often should I use it?", "B: Every four hours.", "A: Anything else?", "B: Drink a lot of water and stay in the shade."]
+    },
+    "Restaurant Complaint": {
+        grammar: "Negative Forms",
+        vocab: [["Cold", "Hideg"], ["Wrong", "Rossz/Téves"], ["Dirty", "Piszkos"], ["Bill", "Számla"], ["Sorry", "Sajnálom"], ["Mistake", "Hiba"]],
+        phrases: [["This is cold.", "Ez hideg."], ["I'm very sorry.", "Nagyon sajnálom."]],
+        sample: ["A: Excuse me, this isn't what I ordered.", "B: I'm sorry. What did you order?", "A: I ordered the fish, but this is steak.", "B: I'll take it back to the kitchen immediately.", "A: Thank you. And could I have some water?", "B: Of course, right away."]
+    },
+    "Car Rental": {
+        grammar: "Future Arrangements",
+        vocab: [["Manual", "Kézi váltós"], ["Automatic", "Automata"], ["License", "Jogosítvány"], ["Insurance", "Biztosítás"], ["Tank", "Tank"], ["Fuel", "Üzemanyag"]],
+        phrases: [["How much is it per day?", "Mennyi naponta?"], ["Return it full.", "Tele tankkal hozd vissza."]],
+        sample: ["A: I'd like to rent a small car for three days.", "B: Do you want manual or automatic?", "A: Manual is fine, thank you.", "B: Can I see your driving license?", "A: Yes, here it is.", "B: Please return the car with a full tank."]
+    },
+    "The Post Office": {
+        grammar: "Prepositions",
+        vocab: [["Stamp", "Bélyeg"], ["Package", "Csomag"], ["Scale", "Mérleg"], ["Address", "Cím"], ["Send", "Küld"], ["Airmail", "Légi posta"]],
+        phrases: [["How much is it?", "Mennyibe kerül?"], ["How long does it take?", "Meddig tart?"]],
+        sample: ["A: I'd like to send this package to Japan.", "B: Put it on the scales, please.", "A: How much is it?", "B: That's 15 euros for airmail.", "A: How long will it take?", "B: It usually takes about five days."]
+    },
+    "Booking Taxi": {
+        grammar: "Time & Numbers",
+        vocab: [["Address", "Cím"], ["Outside", "Kint"], ["Luggage", "Poggyász"], ["Price", "Ár"], ["Driver", "Sofőr"], ["ASAP", "Azonnal/Amint lehet"]],
+        phrases: [["Where are you going?", "Hová mész?"], ["The taxi is outside.", "Kint van a taxi."]],
+        sample: ["A: Can I book a taxi for 8 AM tomorrow?", "B: Certainly. What is the pickup address?", "A: 22 Oxford Street.", "B: And where are you going?", "A: To the train station.", "B: Okay, a silver Toyota will be outside at 8:00."]
+    },
+    "At the Gym": {
+        grammar: "Ability (Can)",
+        vocab: [["Member", "Tag"], ["Coach", "Edző"], ["Towel", "Törölköző"], ["Shower", "Zuhany"], ["Weights", "Súlyok"], ["Beginner", "Kezdő"]],
+        phrases: [["I want to join.", "Szeretnék belépni."], ["Where is the coach?", "Hol az edző?"]],
+        sample: ["A: Hello, I'd like to become a member.", "B: Great. Have you used a gym before?", "A: No, I'm a complete beginner.", "B: We have a coach who can help you.", "A: Do I need to bring my own towel?", "B: Yes, and please wear clean sports shoes."]
+    },
+    "At the Market": {
+        grammar: "Quantities (How much)",
+        vocab: [["Fresh", "Friss"], ["Kilo", "Kiló"], ["Tomatoes", "Paradicsom"], ["Fruit", "Gyümölcs"], ["Price", "Ár"], ["Change", "Visszajáró"]],
+        phrases: [["Are these fresh?", "Ezek frissek?"], ["A kilo, please.", "Egy kilót kérek."]],
+        sample: ["A: Hello! Are these tomatoes fresh?", "B: Yes, they arrived this morning.", "A: How much are they?", "B: They are 3 euros a kilo.", "A: I'll have two kilos, please.", "B: Here you are. Anything else?"]
+    },
+    "Lost Property": {
+        grammar: "Descriptions",
+        vocab: [["Wallet", "Pénztárca"], ["Lost", "Elveszett"], ["Found", "Megtalált"], ["Leather", "Bőr"], ["Color", "Szín"], ["Inside", "Belül"]],
+        phrases: [["I lost my bag.", "Elvesztettem a táskám."], ["What does it look like?", "Hogy néz ki?"]],
+        sample: ["A: Excuse me, I lost my wallet on the bus.", "B: What color is it?", "A: It is small and brown leather.", "B: Was there anything inside?", "A: Yes, my ID card and some cash.", "B: Let me check the lost and found box."]
+    },
+    "Pet Shop": {
+        grammar: "Object Pronouns",
+        vocab: [["Kitten", "Cica"], ["Puppy", "Kutyus"], ["Friendly", "Barátságos"], ["Cage", "Ketrec"], ["Adopt", "Örökbe fogad"], ["Food", "Eledel"]],
+        phrases: [["How much is he?", "Mennyibe kerül?"], ["He is very friendly.", "Ő nagyon barátságos."]],
+        sample: ["A: Hello, I'm looking for a small pet.", "B: Do you like cats or dogs?", "A: I like them both, but I live in a flat.", "B: Then a kitten is better for you.", "A: Is she friendly?", "B: Yes, she loves playing with everyone."]
+    },
+    "Job Interview": {
+        grammar: "Past Experience",
+        vocab: [["Experience", "Tapasztalat"], ["Skills", "Készségek"], ["Salary", "Fizetés"], ["Apply", "Jelentkezik"], ["Full-time", "Teljes munkaidő"], ["Office", "Iroda"]],
+        phrases: [["Tell me about yourself.", "Mesélj magadról."], ["When can you start?", "Mikor tudsz kezdeni?"]],
+        sample: ["A: Why do you want to work for us?", "B: I love your company's products.", "A: Do you have any experience?", "B: Yes, I worked in a shop for two years.", "A: When can you start?", "B: I can start next Monday."]
+    }
+};
+
+let currentTopic = "";
+let cardIdx = 0;
+let flashMode = "phrases"; // Default mode
+let userOrder = [];
+
+// Init UI
+const grid = document.getElementById('topicGrid');
+Object.keys(topicsData).forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'btn-topic school-card';
+    btn.innerText = name;
+    btn.onclick = () => loadTopic(name, btn);
+    grid.appendChild(btn);
+});
+
+function loadTopic(name, btn) {
+    document.querySelectorAll('.btn-topic').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTopic = name;
+    
+    document.getElementById('workspace').classList.remove('hidden');
+    document.getElementById('grammarDisplay').innerText = topicsData[name].grammar;
+    document.getElementById('vocabDisplay').innerHTML = topicsData[name].vocab.map(v => 
+        `<span class="px-2 py-1 bg-orange-100 text-orange-700 rounded-lg text-[9px] font-black uppercase">${v[0]}</span>`
+    ).join('');
+    
+    cardIdx = 0;
+    renderCard();
+    resetOrder();
+}
+
+function setMode(mode) {
+    flashMode = mode;
+    document.getElementById('modePhrases').classList.toggle('active', mode === 'phrases');
+    document.getElementById('modeVocab').classList.toggle('active', mode === 'vocab');
+    cardIdx = 0;
+    renderCard();
+}
+
+function renderCard() {
+    const data = topicsData[currentTopic][flashMode];
+    const pair = data[cardIdx];
+    const container = document.getElementById('cardContainer');
+    document.getElementById('cardCounter').innerText = `${cardIdx+1}/${data.length}`;
+    
+    container.innerHTML = `<div class="flashcard-inner" onclick="this.parentElement.classList.toggle('flipped')">
+        <div class="flashcard-front">${pair[0]}</div>
+        <div class="flashcard-back">${pair[1]}</div>
+    </div>`;
+    container.classList.remove('flipped');
+}
+
+function changeCard(n) {
+    const data = topicsData[currentTopic][flashMode];
+    cardIdx = (cardIdx + n + data.length) % data.length;
+    renderCard();
+}
+
+function resetOrder() {
+    userOrder = [];
+    const container = document.getElementById('shuffledContainer');
+    const dropZone = document.getElementById('dropZone');
+    dropZone.innerHTML = '';
+    container.innerHTML = '';
+    const shuffled = [...topicsData[currentTopic].sample].sort(() => Math.random() - 0.5);
+    shuffled.forEach(line => {
+        const b = document.createElement('button');
+        b.className = "phrase-btn shadow-sm";
+        b.innerHTML = line.replace(/^[A-B]:/, '<span class="text-orange-500 font-black">$1</span>');
+        b.onclick = () => { if(!b.classList.contains('disabled')) { b.classList.add('disabled'); addToZone(line); } };
+        container.appendChild(b);
+    });
+}
+
+function addToZone(line) {
+    userOrder.push(line);
+    const p = document.createElement('div');
+    p.className = "p-2 bg-white rounded border text-sm shadow-sm";
+    p.innerHTML = line.replace(/^[A-B]:/, '<span class="text-teal-600 font-black">$1</span>');
+    document.getElementById('dropZone').appendChild(p);
+}
+
+function verifyOrder() {
+    const correct = topicsData[currentTopic].sample;
+    const items = document.getElementById('dropZone').children;
+    if(userOrder.length < correct.length) return alert("Please sort all sentences first!");
+    userOrder.forEach((l, i) => {
+        items[i].style.borderColor = (l === correct[i]) ? "#2BB6B4" : "#EF4444";
+        items[i].style.backgroundColor = (l === correct[i]) ? "#F0FDFA" : "#FEF2F2";
+    });
+}
+
+function showSolution() {
+    const dropZone = document.getElementById('dropZone');
+    dropZone.innerHTML = `<div class="text-[9px] font-black text-secondary mb-3 tracking-widest uppercase text-center">Correct Sequence</div>`;
+    topicsData[currentTopic].sample.forEach(line => {
+        const p = document.createElement('div');
+        p.className = "p-2 bg-teal-50 rounded border border-teal-200 text-sm mb-1";
+        p.innerHTML = line.replace(/^[A-B]:/, '<span class="text-teal-700 font-black">$1</span>');
+        dropZone.appendChild(p);
+    });
+}
+</script>
+</body>
+</html>
